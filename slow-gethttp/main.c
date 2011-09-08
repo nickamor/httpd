@@ -1,6 +1,11 @@
 #include "../common.h"
 
-int main(void) {
-	dbgprint("Hello, World!");
-	return 0;
+int
+main(void);
+
+int
+main()
+{
+  dbgprint("Hello, World!");
+  return 0;
 }

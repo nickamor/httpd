@@ -4,11 +4,13 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-int main(int argc, char ** argv);
+int
+main(void);
 
-int main(int argc, char ** argv)
+int
+main()
 {
   printf("Hello World!");
-  
+
   return 0;
 }
