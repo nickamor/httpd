@@ -13,9 +13,12 @@ NONTARGETS = httpdoc
 .PHONY: all $(TARGETS) clean
 all: $(TARGETS)
 
-#ifeq "$(shell uname)" "Solaris"
-#	$(MAKE) = gmake
-#endif
+OSTYPE = $(shell uname)
+
+ifeq "$(OSTYPE)" "SunOS"
+	TARGETS = server-single
+	MAKE = gmake
+endif
 
 $(TARGETS):
 	@$(MAKE) -C $@ -f ../common.mk all TARGET=$@
@@ -23,3 +26,8 @@ $(TARGETS):
 clean:
 	@$(RM) *.o *~ **/*.o **/*~
 	@$(RM) $(BINARIES)
+
+help:
+	@echo Targets: $(TARGETS)
+	@echo Binaries: $(BINARIES)
+	@echo Make: $(MAKE)
