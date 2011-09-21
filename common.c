@@ -8,8 +8,6 @@
 
 #include "common.h"
 
-const char * default_root = "../httpdoc";
-
 /* returns 1 if a file named filename exists, 0 otherwise */
 int
 file_exists(const char * filename)

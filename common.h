@@ -16,14 +16,27 @@ struct server_state_t
 
 struct server_config_t
 {
-  char * server_root;
+  int port;
+  char * root;
+  char * host;
+
+  int shutdown_signal;
+  char * shutdown_request;
+  char * status_request;
+
+  char * logfile;
+  int logging;
+  char * recordfile;
+  int recording;
+
+  struct list_t * mime_types;
+
+  char * name;
 };
 
 struct server_state_t server_state;
 
 struct server_config_t server_config;
-
-const char *default_root;
 
 struct list_t
 {

@@ -20,10 +20,11 @@
 #define REQUEST_SIZE 1024
 #define RESPONSE_SIZE 1024
 
-const char * doc404_format = "<html><head><title>File Not Found</title></head>\n"
-    "<body><h3>File Not Found</h3>\n"
-    "<p>The requested document %s was not found on this server.</p>\n"
-    "</body></html>";
+const char * doc404_format =
+    "<html><head><title>File Not Found</title></head>\n"
+        "<body><h3>File Not Found</h3>\n"
+        "<p>The requested document %s was not found on this server.</p>\n"
+        "</body></html>";
 
 void
 http_respond(int clisock)
@@ -49,36 +50,39 @@ http_respond(int clisock)
   char *date = strdate();
 
   /* log request */
-  char *request_log = "request.txt";
-  FILE *request_log_file = fopen(request_log, "w");
-  int i = 0;
-  while (i < (int) strlen(request))
+  if (server_config.recording == TRUE)
     {
-      fputc(request[i], request_log_file);
-      ++i;
+      FILE *request_log_file = fopen(server_config.recordfile, "w");
+      int i = 0;
+      while (i < (int) strlen(request))
+        {
+          fputc(request[i], request_log_file);
+          ++i;
+        }
+      fclose(request_log_file);
     }
-  fclose(request_log_file);
+
+  /* start building response */
   int response_code = 0;
 
-  /* parse request */
+  /* parse request, determing response code */
   char *req_filename = NULL;
   char *localfile = NULL;
   if (strstr(request, "GET ") == request)
     {
+      /* get request filename */
       char *req_file_start = strchr(request, ' ') + 1;
-      //char *req_file_end = strchr(req_file_start, ' ');
-
       int filename_length = strcspn(req_file_start, " ");
       if (filename_length > 0)
         {
-          /* get request filename */
           req_filename = calloc(filename_length + 1, sizeof(char));
           strncpy(req_filename, req_file_start, filename_length);
 
           /* get local filename */
-          localfile = calloc(strlen(server_config.server_root) + strlen(req_filename) + 1,
+          localfile = calloc(
+              strlen(server_config.root) + strlen(req_filename) + 1,
               sizeof(char));
-          sprintf(localfile, "%s%s", server_config.server_root, req_filename);
+          sprintf(localfile, "%s%s", server_config.root, req_filename);
 
           /* replace hexcode escaped characters with ascii counterparts */
           char *c = localfile;
@@ -109,28 +113,29 @@ http_respond(int clisock)
               strcat(localfile, "index.html");
             }
         }
+      /* test file exists */
+      if (file_exists(localfile))
+        {
+          if (file_length(localfile) > 0)
+            {
+              response_code = HTTP_200_OK;
+            }
+          else
+            {
+              response_code = HTTP_204_No_Content;
+            }
+        }
+      else
+        {
+          response_code = HTTP_404_Not_Found;
+        }
     }
   else
     {
       response_code = HTTP_400_Bad_Request;
     }
 
-  /* test file exists */
-  if (file_exists(localfile))
-    {
-      if (file_length(localfile) > 0)
-        {
-          response_code = HTTP_200_OK;
-        }
-      else
-        {
-          response_code = HTTP_204_No_Content;
-        }
-    }
-  else
-    {
-      response_code = HTTP_404_Not_Found;
-    }
+  /* build response */
   char response[RESPONSE_SIZE];
   unsigned char *content = NULL;
   int content_length = 0;
@@ -138,27 +143,32 @@ http_respond(int clisock)
     {
   case 200:
     content_length = file_length(localfile);
-    sprintf( response, "HTTP/1.1 200 OK\r\n"
-    "Date: %s\r\n"
-    "Connection: close\r\n"
-    "Content-Type: %s\r\n"
-    "Content-Length: %d\r\n"
-    "\r\n", date, get_content_type(localfile), content_length);
+    sprintf(
+        response,
+        "HTTP/1.1 200 OK\r\n"
+        "Date: %s\r\n"
+        "Server: %s\r\n"
+        "Connection: close\r\n"
+        "Content-Type: %s\r\n"
+        "Content-Length: %d\r\n"
+        "\r\n", date, server_config.name, get_content_type(localfile), content_length);
     content = filegetc(localfile);
     break;
   case 204:
     sprintf(response, "HTTP/1.1 204 No Data\r\n"
     "Date: %s\r\n"
+    "Server: %s\r\n"
     "Connection: close\r\n"
     "Content-Type: %s\r\n"
     "Content-Length: 0\r\n"
-    "\r\n", date, get_content_type(localfile));
+    "\r\n", date, server_config.name, get_content_type(localfile));
     break;
   case 400:
     sprintf(response, "HTTP/1.1 400 Bad Request\r\n"
     "Date: %s\r\n"
+    "Server: %s\r\n"
     "Connection: close\r\n"
-    "\r\n", date);
+    "\r\n", date, server_config.name);
     break;
   case 404:
     content_length = strlen(doc404_format) + strlen(req_filename);
@@ -166,18 +176,20 @@ http_respond(int clisock)
 
     sprintf(response, "HTTP/1.1 404 Not Found\r\n"
     "Date: %s\r\n"
+    "Server: %s\r\n"
     "Content-Type: text/html\r\n"
     "Content-Length: %d\r\n"
     "Connection: close\r\n"
-    "\r\n", date, content_length);
+    "\r\n", date, server_config.name, content_length);
 
     sprintf((char *)content, doc404_format, req_filename);
     break;
   default:
     sprintf(response, "HTTP/1.1 501 Not Implemented\r\n"
     "Date: %s\r\n"
+    "Server: %s\r\n"
     "Connection: close\r\n"
-    "\r\n", date);
+    "\r\n", date, server_config.name);
     break;
     }
   free(date);
