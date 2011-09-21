@@ -8,6 +8,8 @@
 
 #include "common.h"
 
+const char * default_root = "../httpdoc";
+
 /* returns 1 if a file named filename exists, 0 otherwise */
 int
 file_exists(const char * filename)
@@ -128,5 +130,27 @@ void
 dbgprint(char *string)
 {
   fprintf(stderr, "%s\n", string);
+}
+
+char *
+get_content_type(const char *filename)
+{
+  /* set content-type */
+  if (strcmp(strrchr(filename, '.'), ".html") == 0)
+    {
+      return "text/html";
+    }
+  else if (strcmp(strrchr(filename, '.'), ".jpg") == 0)
+    {
+      return "image/jpeg";
+    }
+  else if (strcmp(strrchr(filename, '.'), ".png") == 0)
+    {
+      return "image/png";
+    }
+  else
+    {
+      return "text/plain";
+    }
 }
 

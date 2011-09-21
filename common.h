@@ -2,10 +2,28 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-#ifndef common_h
+#ifndef COMMON_FILE_H_
+#define COMMON_FILE_H_
 
 #define TRUE 1
 #define FALSE 0
+
+struct server_state_t
+{
+  int accepting;
+  int connections;
+};
+
+struct server_config_t
+{
+  char * server_root;
+};
+
+struct server_state_t server_state;
+
+struct server_config_t server_config;
+
+const char *default_root;
 
 struct list_t
 {
@@ -41,8 +59,10 @@ strdate(void);
 unsigned char *
 filegetc(const char *);
 
+char *
+get_content_type(const char *);
+
 void
 dbgprint(char *);
 
-#define common_h
 #endif

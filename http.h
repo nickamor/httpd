@@ -16,10 +16,7 @@ enum HTTP_RESPONSE_CODE
   HTTP_400_Bad_Request = 400
 };
 
-const char *doc404_format = "<html><head><title>File Not Found</title></head>\n"
-    "<body><h3>File Not Found</h3>\n"
-    "<p>The requested document %s was not found on this server.</p>\n"
-    "</body></html>";
-
+void
+http_respond(int clisock);
 
 #endif /* HTTP_H_ */
