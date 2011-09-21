@@ -25,24 +25,6 @@ file_exists(const char *);
 int
 file_length(const char *);
 
-int
-i_socket(int, int, int);
-
-int
-i_bind(int, const struct sockaddr *, socklen_t);
-
-int
-i_listen(int, int);
-
-int
-i_accept(int, struct sockaddr *, socklen_t *);
-
-ssize_t
-i_recvfrom(int, void *, size_t, int, struct sockaddr *, socklen_t *);
-
-ssize_t
-i_sendto(int, const void *, size_t, int, const struct sockaddr *, socklen_t);
-
 struct list_t *
 list_tail(struct list_t*);
 

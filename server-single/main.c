@@ -9,6 +9,7 @@
 #include <arpa/inet.h>
 
 #include "../common.h"
+#include "../sockets.h"
 #include "../http.h"
 
 #define REQUEST_SIZE 1024
