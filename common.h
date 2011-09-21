@@ -7,9 +7,6 @@
 #define TRUE 1
 #define FALSE 0
 
-void
-dbgprint(char *);
-
 struct list_t
 {
   void *data;
@@ -53,12 +50,6 @@ int
 i_getaddrinfo(const char *, const char *, const struct addrinfo *,
     struct addrinfo **);
 
-int
-parse_boolstr_value(const char *);
-
-struct list_t *
-parse_config(const char *);
-
 unsigned int
 strhash(char *);
 
@@ -67,6 +58,9 @@ strdate(void);
 
 unsigned char *
 filegetc(const char *);
+
+void
+dbgprint(char *);
 
 #define common_h
 #endif
