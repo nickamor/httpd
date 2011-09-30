@@ -50,21 +50,6 @@ list_tail(struct list_t * list)
   return list_tail(list->next);
 }
 
-/* wrapper for getaddrinfo */
-int
-i_getaddrinfo(const char * name, const char * service,
-    const struct addrinfo * hints, struct addrinfo ** res)
-{
-  int igetaddr = getaddrinfo(name, service, hints, res);
-  if (igetaddr != 0)
-    {
-      fprintf(stderr, "%s: %s\n", name, gai_strerror(igetaddr));
-      exit(EXIT_FAILURE);
-    }
-
-  return igetaddr;
-}
-
 /* for now, simple string hashing function */
 unsigned int
 strhash(char *string)
@@ -131,24 +116,31 @@ dbgprint(char *string)
 }
 
 char *
-get_content_type(const char *filename)
+get_content_type(const char *filename, struct list_t * mime_types)
 {
-  /* set content-type */
-  if (strcmp(strrchr(filename, '.'), ".html") == 0)
+  struct list_t * iter = mime_types;
+
+  char * filetype = strrchr(filename, '.') + 1;
+
+  while (iter)
     {
-      return "text/html";
+      struct key_value_t * keyval = iter->data;
+
+      if (!strchr(keyval->key, '-'))
+        {
+          return keyval->value;
+        }
+
+      char * itertype = strrchr(keyval->key, '-') + 1;
+
+      if (strcmp(itertype, filetype) == 0)
+        {
+          return keyval->value;
+        }
+
+      iter = iter->next;
     }
-  else if (strcmp(strrchr(filename, '.'), ".jpg") == 0)
-    {
-      return "image/jpeg";
-    }
-  else if (strcmp(strrchr(filename, '.'), ".png") == 0)
-    {
-      return "image/png";
-    }
-  else
-    {
-      return "text/plain";
-    }
+
+  return NULL;
 }
 

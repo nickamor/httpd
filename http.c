@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -20,11 +21,26 @@
 #define REQUEST_SIZE 1024
 #define RESPONSE_SIZE 1024
 
-const char * doc404_format =
-    "<html><head><title>File Not Found</title></head>\n"
-        "<body><h3>File Not Found</h3>\n"
-        "<p>The requested document %s was not found on this server.</p>\n"
-        "</body></html>";
+const char * doc404_format = "<html><head><title>File Not Found</title></head>"
+    "<body><h3>File Not Found</h3><p>The requested document %s was not found"
+    " on this server.";
+
+const char * docshutdown =
+    "<html><head><title>Server Shutting Down...</title></head>"
+        "<body><h3>Server Shutting Down...";
+
+const char * docstatus_format =
+    "<html><head><title>Server Status</title></head><body>"
+        "<h3>Server Status</h3>"
+        "<p id=\"server-name\">%s</p>"
+        "<p id=\"date\">Status at %s</p>"
+        "<br>"
+        "<p id=\"connections\">Active connections: %d</p>"
+        "<p id=\"requests\">Total requests: %d</p>"
+        "<p id=\"listen-port\">Listening port: %d</p>"
+        "<br>"
+        "<p id=\"shutdown\">To shutdown, do \"kill -%d %d\" or click "
+        "<a href=\"/%s\">here</a>.";
 
 void
 http_respond(int clisock)
@@ -135,6 +151,20 @@ http_respond(int clisock)
       response_code = HTTP_400_Bad_Request;
     }
 
+  /* handle special requests */
+  int special_request_type = 0;
+  if (strcmp(req_filename + 1, server_config.shutdown_request) == 0)
+    {
+      raise(server_config.shutdown_signal);
+      response_code = HTTP_200_OK;
+      special_request_type = 1;
+    }
+  else if (strcmp(req_filename + 1, server_config.status_request) == 0)
+    {
+      response_code = HTTP_200_OK;
+      special_request_type = 2;
+    }
+
   /* build response */
   char response[RESPONSE_SIZE];
   unsigned char *content = NULL;
@@ -142,26 +172,70 @@ http_respond(int clisock)
   switch (response_code)
     {
   case 200:
-    content_length = file_length(localfile);
-    sprintf(
-        response,
-        "HTTP/1.1 200 OK\r\n"
+    if (special_request_type == 1)
+      {
+        sprintf(response, "HTTP/1.1 200 OK\r\n"
         "Date: %s\r\n"
         "Server: %s\r\n"
-        "Connection: close\r\n"
-        "Content-Type: %s\r\n"
+        "Content-Type: text/html\r\n"
         "Content-Length: %d\r\n"
-        "\r\n", date, server_config.name, get_content_type(localfile), content_length);
-    content = filegetc(localfile);
+        "Connection: close\r\n"
+        "\r\n"
+        "%s", date, server_config.name, (int)strlen(docshutdown), docshutdown);
+      }
+    else if (special_request_type == 2)
+      {
+        content_length = strlen(docstatus_format) + 1024;
+        content = calloc(content_length + 1, sizeof(char));
+
+        sprintf(
+            (char *)content,
+            docstatus_format,
+            server_config.name,
+            date,
+            server_state.connections,
+            server_state.total_requests,
+            server_config.port,
+            server_config.shutdown_signal,
+            server_state.parent_pid,
+            server_config.shutdown_request);
+
+        content_length = (int)strlen((char *)content);
+
+        sprintf(response, "HTTP/1.1 200 OK\r\n"
+        "Date: %s\r\n"
+        "Server: %s\r\n"
+        "Content-Type: text/html\r\n"
+        "Content-Length: %d\r\n"
+        "Connection: close\r\n"
+        "\r\n", date, server_config.name, content_length);
+
+      }
+    else
+      {
+        content_length = file_length(localfile);
+        sprintf(
+            response,
+            "HTTP/1.1 200 OK\r\n"
+            "Date: %s\r\n"
+            "Server: %s\r\n"
+            "Content-Type: %s\r\n"
+            "Content-Length: %d\r\n"
+            "Connection: close\r\n"
+            "\r\n", date, server_config.name, get_content_type(localfile, server_config.mime_types), content_length);
+        content = filegetc(localfile);
+      }
     break;
   case 204:
-    sprintf(response, "HTTP/1.1 204 No Data\r\n"
-    "Date: %s\r\n"
-    "Server: %s\r\n"
-    "Connection: close\r\n"
-    "Content-Type: %s\r\n"
-    "Content-Length: 0\r\n"
-    "\r\n", date, server_config.name, get_content_type(localfile));
+    sprintf(
+        response,
+        "HTTP/1.1 204 No Data\r\n"
+        "Date: %s\r\n"
+        "Server: %s\r\n"
+        "Content-Type: %s\r\n"
+        "Content-Length: 0\r\n"
+        "Connection: close\r\n"
+        "\r\n", date, server_config.name, get_content_type(localfile, server_config.mime_types));
     break;
   case 400:
     sprintf(response, "HTTP/1.1 400 Bad Request\r\n"

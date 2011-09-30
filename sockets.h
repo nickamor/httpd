@@ -26,4 +26,8 @@ i_recvfrom(int, void *, size_t, int, struct sockaddr *, socklen_t *);
 ssize_t
 i_sendto(int, const void *, size_t, int, const struct sockaddr *, socklen_t);
 
+int
+i_getaddrinfo(const char *, const char *, const struct addrinfo *,
+    struct addrinfo **);
+
 #endif /* SOCKETS_H_ */

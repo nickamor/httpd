@@ -14,14 +14,12 @@
 
 /* parse a file referred to by filename to a list of key-value pairs */
 struct list_t *
-parse_config(const char *filename)
+parse_config(const char * filename)
 {
-  FILE *file;
+  FILE * file = fopen(filename, "r");
   char readline[80];
   struct list_t *list = NULL;
   memset(readline, 0, sizeof(char) * 80);
-
-  file = fopen(filename, "r");
 
   while (fgets(readline, 80, file))
     {
@@ -40,10 +38,10 @@ parse_config(const char *filename)
       struct key_value_t *parsed_line;
       parsed_line = malloc(sizeof(struct key_value_t));
 
-      parsed_line->key = malloc(sizeof(char) * keylen);
+      parsed_line->key = calloc(keylen + 1, sizeof(char));
       memcpy(parsed_line->key, buff_key, keylen);
 
-      parsed_line->value = malloc(sizeof(char) * valuelen);
+      parsed_line->value = calloc(valuelen + 1, sizeof(char));
       memcpy(parsed_line->value, buff_val, valuelen);
 
       // add to list

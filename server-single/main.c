@@ -7,10 +7,13 @@
 #include "../common.h"
 #include "../sockets.h"
 #include "../http.h"
+#include "../config-file.h"
+
+const char * server_name = "server-single";
 
 /* server state */
 struct server_state_t server_state =
-  { TRUE, 0 };
+  { TRUE, 0, 0, 0, 0 };
 
 /* server settings */
 struct server_config_t server_config;
@@ -20,6 +23,95 @@ main(int, char **);
 
 void
 stop_accepting(void);
+
+int
+read_config(const char * filename);
+
+int
+read_config(const char * filename)
+{
+  FILE * configfile_fp = fopen(filename, "r");
+
+  if (!configfile_fp)
+    {
+      fprintf(stderr, "Could not open %s for reading.\n", filename);
+      return FALSE;
+    }
+
+  fclose(configfile_fp);
+
+  struct list_t * config_keys = parse_config(filename);
+
+  struct list_t * iter = config_keys;
+  while (iter)
+    {
+      struct key_value_t *keyval = iter->data;
+
+      if (strcmp(keyval->key, "port") == 0)
+        {
+          server_config.port = strtol(keyval->value, NULL, 0);
+        }
+      else if (strcmp(keyval->key, "root") == 0)
+        {
+          server_config.root = keyval->value;
+        }
+      else if (strcmp(keyval->key, "host") == 0)
+        {
+          server_config.host = keyval->value;
+        }
+      else if (strcmp(keyval->key, "shutdown-signal") == 0)
+        {
+          server_config.shutdown_signal = strtol(keyval->value, NULL, 0);
+        }
+      else if (strcmp(keyval->key, "shutdown-request") == 0)
+        {
+          server_config.shutdown_request = keyval->value;
+        }
+      else if (strcmp(keyval->key, "status-request") == 0)
+        {
+          server_config.status_request = keyval->value;
+        }
+      else if (strcmp(keyval->key, "logfile") == 0)
+        {
+          server_config.logfile = keyval->value;
+        }
+      else if (strcmp(keyval->key, "logging") == 0)
+        {
+          server_config.logging = (
+              (strcmp(keyval->value, "yes") == 0) ? TRUE : FALSE);
+        }
+      else if (strcmp(keyval->key, "recordfile") == 0)
+        {
+          server_config.recordfile = keyval->value;
+        }
+      else if (strcmp(keyval->key, "recording") == 0)
+        {
+          server_config.recording = (
+              (strcmp(keyval->value, "yes") == 0) ? TRUE : FALSE);
+        }
+      else if (strstr(keyval->key, "type"))
+        {
+          struct list_t * new = malloc(sizeof(struct list_t));
+          new->data = keyval;
+          new->next = NULL;
+
+          if (server_config.mime_types)
+            {
+              list_tail(server_config.mime_types)->next = new;
+            }
+          else
+            {
+              server_config.mime_types = new;
+            }
+        }
+
+      iter = iter->next;
+    }
+
+  server_config.name = (char *) server_name;
+
+  return TRUE;
+}
 
 void
 stop_accepting()
@@ -32,56 +124,32 @@ int
 main(int argc, char ** argv)
 {
   /* test arguments */
-  if (argc == 2 || TRUE) {
-      char ** args = argv;
-      args++;
-  }
+  if (argc < 2)
+    {
+      fprintf(stderr, "usage: %s settings.config\n", server_name);
+    }
 
   /* handle config */
-  // TODO: implement server_config options
-  // TODO: read server_config options from file
-  server_config.port = 40000;
-  server_config.root = "../httpdoc";
-  server_config.host = "goanna.cs.rmit.edu.au";
-  server_config.shutdown_signal = 15;
-  server_config.shutdown_request = "config/shutdown.htm";
-  server_config.status_request = "config/status.htm";
-  server_config.logfile = "webserver.log";
-  server_config.logging = TRUE;
-  server_config.recordfile = "lastrequest.txt";
-  server_config.recording = TRUE;
-  struct key_value_t typetxt = {"type-txt", "text/plain"};
-  struct key_value_t typehtm = {"type-htm", "text/html"};
-  struct key_value_t typehtml = {"type-html", "text/html"};
-  struct key_value_t typejpg = {"type-jpg", "image/jpeg"};
-  struct key_value_t typemp3 = {"type-mp3", "audio/mpeg"};
-  struct key_value_t typewav = {"type-wav", "audio/vnd.wave"};
-  struct key_value_t typenone = {"type", "text/plain"};
-  struct list_t typelist7 = {&typenone, NULL};
-  struct list_t typelist6 = {&typewav, &typelist7};
-  struct list_t typelist5 = {&typemp3, &typelist6};
-  struct list_t typelist4 = {&typejpg, &typelist5};
-  struct list_t typelist3 = {&typehtml, &typelist4};
-  struct list_t typelist2 = {&typehtm, &typelist3};
-  struct list_t typelist = {&typetxt, &typelist2};
-  server_config.mime_types = &typelist;
-
-  server_config.name = "server-single";
+  if (!read_config(argv[1]))
+    {
+      return EXIT_FAILURE;
+    }
 
   /* create socket */
-  int listen_socket = i_socket(PF_INET, SOCK_STREAM, 0);
+  server_state.listen_socket = i_socket(PF_INET, SOCK_STREAM, 0);
   // set the socket to be reusable (helpful when testing)
   int on = 1;
-  setsockopt(listen_socket, SOL_SOCKET, SO_REUSEADDR, (char*) &on, sizeof(on));
+  setsockopt(server_state.listen_socket, SOL_SOCKET, SO_REUSEADDR, (char*) &on,
+      sizeof(on));
 
   /* bind socket to listening port and set to listen*/
   struct sockaddr_in myaddr;
   myaddr.sin_family = PF_INET;
   myaddr.sin_port = htons(server_config.port);
   myaddr.sin_addr.s_addr = INADDR_ANY;
-  i_bind(listen_socket, (struct sockaddr *) &myaddr, sizeof(myaddr));
-  i_listen(listen_socket, 5);
-
+  i_bind(server_state.listen_socket, (struct sockaddr *) &myaddr,
+      sizeof(myaddr));
+  i_listen(server_state.listen_socket, 5);
 
   /* register interrupt handler */
   struct sigaction new_action;
@@ -91,24 +159,29 @@ main(int argc, char ** argv)
   int signal_to_listen_for = SIGTERM;
   sigaction(signal_to_listen_for, &new_action, NULL);
 
+  /* remember parent pid */
+  server_state.parent_pid = getpid();
+
   while (server_state.accepting)
     {
       /* accept new connections */
       struct sockaddr_in cliaddr;
       memset(&cliaddr, 0, sizeof(cliaddr));
       socklen_t cliaddrlen = sizeof(cliaddr);
-      int clisock = i_accept(listen_socket, (struct sockaddr *) &cliaddr,
-          &cliaddrlen);
+      int clisock = i_accept(server_state.listen_socket,
+          (struct sockaddr *) &cliaddr, &cliaddrlen);
       if (clisock > 0)
         {
+          ++server_state.total_requests;
           ++server_state.connections;
           http_respond(clisock);
           --server_state.connections;
         }
     }
 
-  close(listen_socket);
+  close(server_state.listen_socket);
 
+  /* wait for any loose connections to close */
   while (server_state.connections > 0)
     ;
 

@@ -96,3 +96,19 @@ i_sendto(int sockfd, const void * buf, size_t len, int flags,
     }
   return isendto;
 }
+
+/* wrapper for getaddrinfo */
+int
+i_getaddrinfo(const char * name, const char * service,
+    const struct addrinfo * hints, struct addrinfo ** res)
+{
+  int igetaddr = getaddrinfo(name, service, hints, res);
+  if (igetaddr != 0)
+    {
+      fprintf(stderr, "%s: %s\n", name, gai_strerror(igetaddr));
+      exit(EXIT_FAILURE);
+    }
+
+  return igetaddr;
+}
+

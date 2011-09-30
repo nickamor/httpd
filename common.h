@@ -12,6 +12,9 @@ struct server_state_t
 {
   int accepting;
   int connections;
+  int listen_socket;
+  int total_requests;
+  int parent_pid;
 };
 
 struct server_config_t
@@ -59,10 +62,6 @@ file_length(const char *);
 struct list_t *
 list_tail(struct list_t*);
 
-int
-i_getaddrinfo(const char *, const char *, const struct addrinfo *,
-    struct addrinfo **);
-
 unsigned int
 strhash(char *);
 
@@ -73,7 +72,7 @@ unsigned char *
 filegetc(const char *);
 
 char *
-get_content_type(const char *);
+get_content_type(const char *, struct list_t * list);
 
 void
 dbgprint(char *);
