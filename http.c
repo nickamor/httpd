@@ -16,6 +16,7 @@
 #include <arpa/inet.h>
 
 #include "common.h"
+#include "server-common.h"
 #include "http.h"
 
 #define REQUEST_SIZE 1024
@@ -155,7 +156,7 @@ http_respond(int clisock)
   int special_request_type = 0;
   if (strcmp(req_filename + 1, server_config.shutdown_request) == 0)
     {
-      raise(server_config.shutdown_signal);
+      kill(server_state.parent_pid, server_config.shutdown_signal);
       response_code = HTTP_200_OK;
       special_request_type = 1;
     }

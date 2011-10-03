@@ -16,9 +16,9 @@ file_exists(const char * filename)
   if (file)
     {
       fclose(file);
-      return 1;
+      return TRUE;
     }
-  return 0;
+  return FALSE;
 }
 
 /* returns file length in bytes, or -1 if no such file exists */

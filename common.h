@@ -8,39 +8,6 @@
 #define TRUE 1
 #define FALSE 0
 
-struct server_state_t
-{
-  int accepting;
-  int connections;
-  int listen_socket;
-  int total_requests;
-  int parent_pid;
-};
-
-struct server_config_t
-{
-  int port;
-  char * root;
-  char * host;
-
-  int shutdown_signal;
-  char * shutdown_request;
-  char * status_request;
-
-  char * logfile;
-  int logging;
-  char * recordfile;
-  int recording;
-
-  struct list_t * mime_types;
-
-  char * name;
-};
-
-struct server_state_t server_state;
-
-struct server_config_t server_config;
-
 struct list_t
 {
   void *data;
