@@ -29,37 +29,72 @@ struct childpid_list_t
 {
   pid_t pid;
   struct childpid_list_t * next;
-  struct childpid_list_t * prev;
 };
 
 struct childpid_list_t * childpid_list = NULL;
 
 void
-child_exits(pid_t childpid)
+add_childpid(pid_t childpid)
+{
+  /* add the new child to the child manager */
+  struct childpid_list_t * new_childpid = calloc(1,
+      sizeof(struct childpid_list_t));
+  new_childpid->pid = childpid;
+  new_childpid->next = NULL;
+
+  if (childpid_list)
+    {
+      struct childpid_list_t * tail_childpid = childpid_list;
+      while (tail_childpid->next)
+        {
+          tail_childpid = tail_childpid->next;
+        }
+      tail_childpid->next = new_childpid;
+    }
+  else
+    {
+      childpid_list = new_childpid;
+    }
+}
+
+void
+remove_childpid(pid_t childpid)
 {
   /* find the child to remove */
-  struct childpid_list_t * childpid_to_remove, *prev_childpid, *next_childpid;
+  struct childpid_list_t * childpid_to_remove = NULL, *prev_childpid = NULL;
 
   childpid_to_remove = childpid_list;
   while (childpid_to_remove && childpid_to_remove->pid != childpid)
     {
+      prev_childpid = childpid_to_remove;
       childpid_to_remove = childpid_to_remove->next;
     }
 
   /* remove the child from the child manager */
-  prev_childpid = childpid_to_remove->prev;
-  next_childpid = childpid_to_remove->next;
-
-  if (prev_childpid)
+  if (childpid_to_remove)
     {
-      prev_childpid->next = next_childpid;
-    }
-  if (next_childpid)
-    {
-      next_childpid->prev = prev_childpid;
-    }
+      struct childpid_list_t * next_childpid = childpid_to_remove->next;
 
-  free(childpid_to_remove);
+      if (prev_childpid)
+        {
+          prev_childpid->next = next_childpid;
+        }
+
+      if (childpid_list == childpid_to_remove)
+        {
+          childpid_list = childpid_to_remove->next;
+        }
+
+      free(childpid_to_remove);
+    }
+}
+
+void
+child_exits()
+{
+  pid_t childpid = wait(NULL);
+
+  remove_childpid(childpid);
 }
 
 int
@@ -98,7 +133,7 @@ main(int argc, char ** argv)
   struct sigaction quit_action;
   quit_action.sa_handler = (void *) stop_accepting;
   sigemptyset(&quit_action.sa_mask);
-  quit_action.sa_flags = 0;
+  quit_action.sa_flags = SA_NOCLDSTOP;
   sigaction(server_config.shutdown_signal, &quit_action, NULL);
 
   /* register child quit handler */
@@ -107,8 +142,6 @@ main(int argc, char ** argv)
   sigemptyset(&child_finished.sa_mask);
   child_finished.sa_flags = 0;
   sigaction(SIGCHLD, &child_finished, NULL);
-
-  signal(SIGCHLD, SIG_IGN);
 
   /* remember parent pid */
   server_state.parent_pid = getpid();
@@ -139,25 +172,7 @@ main(int argc, char ** argv)
             }
           else
             {
-              /* add the new child to the child manager */
-              struct childpid_list_t * new_childpid = calloc(1,
-                  sizeof(struct childpid_list_t));
-              new_childpid->pid = childpid;
-
-              if (childpid_list)
-                {
-                  struct childpid_list_t * tail_childpid = childpid_list;
-                  while (tail_childpid->next)
-                    {
-                      tail_childpid = tail_childpid->next;
-                    }
-                  tail_childpid->next = new_childpid;
-                  new_childpid->prev = tail_childpid;
-                }
-              else
-                {
-                  childpid_list = new_childpid;
-                }
+              add_childpid(childpid);
 
               close(clisock);
             }
