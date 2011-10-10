@@ -1,6 +1,6 @@
 # Nick Amor - 2011
 
-TARGETS = server-single server-forked
+TARGETS = server-single server-forked server-threaded
 
 BINARIES = server-single/server-single slow-gethttp/slow-gethttp \
 		server-forked/server-forked server-threaded/server-threaded \
@@ -12,6 +12,8 @@ SRC_SINGLE = server-single/main.c
 OBJ_SINGLE = $(SRC_SINGLE:.c=.o)
 SRC_FORKED = server-forked/main.c
 OBJ_FORKED = $(SRC_FORKED:.c=.o)
+SRC_THREADED = server-threaded/main.c
+OBJ_THREADED = $(SRC_FORKED:.c=.o)
 
 CC = gcc
 CFLAGS = -Wall -Wextra -g
@@ -27,6 +29,9 @@ server-single: $(OBJ) $(OBJ_SINGLE)
 
 server-forked: $(OBJ) $(OBJ_FORKED)
 	@$(CC) $(OBJ) $(OBJ_FORKED) -o server-forked/server-forked $(LDFLAGS)
+
+server-threaded: $(OBJ) $(OBJ_THREADED)
+	@$(CC) $(OBJ) $(OBJ_THREADED) -o server-threaded/server-threaded $(LDFLAGS)
 
 %.o: %.c
 	@$(CC) $(CFLAGS) -c -o $@ $<

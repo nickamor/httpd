@@ -3,6 +3,7 @@
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 #include "../common.h"
 #include "../server-common.h"
@@ -10,7 +11,7 @@
 #include "../http.h"
 #include "../config-file.h"
 
-const char * server_name = "server-single";
+const char * server_name = "server-forked";
 
 int
 main(int, char **);
@@ -24,6 +25,43 @@ stop_accepting()
   server_state.accepting = FALSE;
 }
 
+struct childpid_list_t
+{
+  pid_t pid;
+  struct childpid_list_t * next;
+  struct childpid_list_t * prev;
+};
+
+struct childpid_list_t * childpid_list = NULL;
+
+void
+child_exits(pid_t childpid)
+{
+  /* find the child to remove */
+  struct childpid_list_t * childpid_to_remove, *prev_childpid, *next_childpid;
+
+  childpid_to_remove = childpid_list;
+  while (childpid_to_remove && childpid_to_remove->pid != childpid)
+    {
+      childpid_to_remove = childpid_to_remove->next;
+    }
+
+  /* remove the child from the child manager */
+  prev_childpid = childpid_to_remove->prev;
+  next_childpid = childpid_to_remove->next;
+
+  if (prev_childpid)
+    {
+      prev_childpid->next = next_childpid;
+    }
+  if (next_childpid)
+    {
+      next_childpid->prev = prev_childpid;
+    }
+
+  free(childpid_to_remove);
+}
+
 int
 main(int argc, char ** argv)
 {
@@ -31,6 +69,7 @@ main(int argc, char ** argv)
   if (argc < 2)
     {
       fprintf(stderr, "usage: %s settings.config\n", server_name);
+      exit(0);
     }
 
   /* handle config */
@@ -60,10 +99,15 @@ main(int argc, char ** argv)
   quit_action.sa_handler = (void *) stop_accepting;
   sigemptyset(&quit_action.sa_mask);
   quit_action.sa_flags = 0;
-  int signal_to_listen_for = SIGTERM;
-  sigaction(signal_to_listen_for, &quit_action, NULL);
+  sigaction(server_config.shutdown_signal, &quit_action, NULL);
 
   /* register child quit handler */
+  struct sigaction child_finished;
+  child_finished.sa_handler = (void *) child_exits;
+  sigemptyset(&child_finished.sa_mask);
+  child_finished.sa_flags = 0;
+  sigaction(SIGCHLD, &child_finished, NULL);
+
   signal(SIGCHLD, SIG_IGN);
 
   /* remember parent pid */
@@ -80,17 +124,41 @@ main(int argc, char ** argv)
       if (clisock > 0)
         {
           ++server_state.total_requests;
-          pid_t child_id = fork();
-          if (child_id == 0)
+          pid_t childpid = fork();
+          if (childpid == 0)
             {
-              ++server_state.connections;
               close(server_state.listen_socket);
+
+              ++server_state.connections;
+
               http_respond(clisock);
+
               --server_state.connections;
+
               exit(0);
             }
           else
             {
+              /* add the new child to the child manager */
+              struct childpid_list_t * new_childpid = calloc(1,
+                  sizeof(struct childpid_list_t));
+              new_childpid->pid = childpid;
+
+              if (childpid_list)
+                {
+                  struct childpid_list_t * tail_childpid = childpid_list;
+                  while (tail_childpid->next)
+                    {
+                      tail_childpid = tail_childpid->next;
+                    }
+                  tail_childpid->next = new_childpid;
+                  new_childpid->prev = tail_childpid;
+                }
+              else
+                {
+                  childpid_list = new_childpid;
+                }
+
               close(clisock);
             }
         }
@@ -99,7 +167,10 @@ main(int argc, char ** argv)
   close(server_state.listen_socket);
 
   /* wait for any loose connections to close */
-  wait(NULL);
+  while (childpid_list)
+    {
+      waitpid(childpid_list->pid, NULL, 0);
+    }
 
   return EXIT_SUCCESS;
 }

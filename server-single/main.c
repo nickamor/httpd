@@ -33,6 +33,7 @@ main(int argc, char ** argv)
   if (argc < 2)
     {
       fprintf(stderr, "usage: %s settings.config\n", server_name);
+      exit(0);
     }
 
   /* handle config */
@@ -58,12 +59,11 @@ main(int argc, char ** argv)
   i_listen(server_state.listen_socket, 5);
 
   /* register interrupt handler */
-  struct sigaction new_action;
-  new_action.sa_handler = (void *) stop_accepting;
-  sigemptyset(&new_action.sa_mask);
-  new_action.sa_flags = 0;
-  int signal_to_listen_for = SIGTERM;
-  sigaction(signal_to_listen_for, &new_action, NULL);
+  struct sigaction quit_action;
+  quit_action.sa_handler = (void *) stop_accepting;
+  sigemptyset(&quit_action.sa_mask);
+  quit_action.sa_flags = 0;
+  sigaction(server_config.shutdown_signal, &quit_action, NULL);
 
   /* remember parent pid */
   server_state.parent_pid = getpid();
