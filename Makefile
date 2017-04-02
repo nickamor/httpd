@@ -10,7 +10,7 @@ SRC = common.c config-file.c http.c sockets.c server-common.c
 OBJ = $(SRC:.c=.o)
 SRC_SINGLE = server-single/main.c
 OBJ_SINGLE = $(SRC_SINGLE:.c=.o)
-SRC_FORKED = server-forked/main.c
+SRC_FORKED = server-forked/main.c server-forked/childpid.c
 OBJ_FORKED = $(SRC_FORKED:.c=.o)
 SRC_THREADED = server-threaded/main.c
 OBJ_THREADED = $(SRC_FORKED:.c=.o)
