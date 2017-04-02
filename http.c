@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <signal.h>
 #include <sys/types.h>
@@ -63,6 +64,8 @@ http_respond(int clisock)
     }
   shutdown(clisock, SHUT_RD);
 
+  time_t time_t_receive = time(NULL);
+
   /* get date for response use */
   char *date = strdate();
 
@@ -80,7 +83,7 @@ http_respond(int clisock)
     }
 
   /* start building response */
-  int response_code = 0;
+  int status_code = 0;
 
   /* parse request, determing response code */
   char *req_filename = NULL;
@@ -135,21 +138,21 @@ http_respond(int clisock)
         {
           if (file_length(localfile) > 0)
             {
-              response_code = HTTP_200_OK;
+              status_code = HTTP_200_OK;
             }
           else
             {
-              response_code = HTTP_204_No_Content;
+              status_code = HTTP_204_No_Content;
             }
         }
       else
         {
-          response_code = HTTP_404_Not_Found;
+          status_code = HTTP_404_Not_Found;
         }
     }
   else
     {
-      response_code = HTTP_400_Bad_Request;
+      status_code = HTTP_400_Bad_Request;
     }
 
   /* handle special requests */
@@ -157,12 +160,12 @@ http_respond(int clisock)
   if (strcmp(req_filename + 1, server_config.shutdown_request) == 0)
     {
       kill(server_state.parent_pid, server_config.shutdown_signal);
-      response_code = HTTP_200_OK;
+      status_code = HTTP_200_OK;
       special_request_type = 1;
     }
   else if (strcmp(req_filename + 1, server_config.status_request) == 0)
     {
-      response_code = HTTP_200_OK;
+      status_code = HTTP_200_OK;
       special_request_type = 2;
     }
 
@@ -170,7 +173,7 @@ http_respond(int clisock)
   char response[RESPONSE_SIZE];
   unsigned char *content = NULL;
   int content_length = 0;
-  switch (response_code)
+  switch (status_code)
     {
   case 200:
     if (special_request_type == 1)
@@ -191,17 +194,9 @@ http_respond(int clisock)
 
         sprintf(
             (char *)content,
-            docstatus_format,
-            server_config.name,
-            date,
-            server_state.connections,
-            server_state.total_requests,
-            server_config.port,
-            server_config.shutdown_signal,
-            server_state.parent_pid,
-            server_config.shutdown_request);
+            docstatus_format, server_config.name, date, server_state.connections, server_state.total_requests, server_config.port, server_config.shutdown_signal, server_state.parent_pid, server_config.shutdown_request);
 
-        content_length = (int)strlen((char *)content);
+        content_length = (int) strlen((char *) content);
 
         sprintf(response, "HTTP/1.1 200 OK\r\n"
         "Date: %s\r\n"
@@ -275,6 +270,15 @@ http_respond(int clisock)
       send(clisock, content, content_length, 0);
       free(content);
     }
+
+  /* log completion time */
+  time_t time_t_finish = time(NULL);
+  struct tm * tm_finish = localtime(&time_t_finish);
+  log_write(time_t_receive, "%02d:%02d:%02d ip port %s %d %d 0", tm_finish->tm_hour, tm_finish->tm_min,
+      tm_finish->tm_sec, req_filename, status_code, content_length);
+  if (special_request_type = 1) {
+      log_write(time(NULL), "shutdow‹n request");
+  }
 
   shutdown(clisock, SHUT_RDWR);
   close(clisock);
