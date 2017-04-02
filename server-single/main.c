@@ -4,6 +4,7 @@
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "../common.h"
 #include "../server-common.h"
@@ -86,6 +87,8 @@ main(int argc, char ** argv)
     }
 
   close(server_state.listen_socket);
+  log_write(time(NULL), "all connections closed");
+  log_write(time(NULL), "terminating server");
 
   return EXIT_SUCCESS;
 }

@@ -41,6 +41,9 @@ main(int argc, char ** argv)
       return EXIT_FAILURE;
     }
 
+  log_write(time(NULL), "%s", server_name);
+  log_write(time(NULL), "initialisation complete");
+
   /* create socket */
   server_state.listen_socket = i_socket(PF_INET, SOCK_STREAM, 0);
   // set the socket to be reusable
@@ -56,6 +59,7 @@ main(int argc, char ** argv)
   i_bind(server_state.listen_socket, (struct sockaddr *) &myaddr,
       sizeof(myaddr));
   i_listen(server_state.listen_socket, 5);
+  log_write(time(NULL), "listening on port %d", server_config.port);
 
   /* register interrupt handler */
   struct sigaction quit_action;
@@ -94,6 +98,8 @@ main(int argc, char ** argv)
 
   /* wait for any loose connections to close */
   // TODO: this ^
+  log_write(time(NULL), "all connections closed");
+  log_write(time(NULL), "terminating server");
 
   return EXIT_SUCCESS;
 }

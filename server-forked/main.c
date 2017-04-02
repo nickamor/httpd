@@ -1,10 +1,13 @@
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
+#include <time.h>
 #include <unistd.h>
 #include <sys/wait.h>
 
+#include "childpid.h"
 #include "../common.h"
 #include "../server-common.h"
 #include "../sockets.h"
@@ -186,6 +189,9 @@ main(int argc, char ** argv)
     {
       waitpid(childpid_list->pid, NULL, 0);
     }
+
+  log_write(time(NULL), "all connections closed");
+  log_write(time(NULL), "terminating server");
 
   return EXIT_SUCCESS;
 }
