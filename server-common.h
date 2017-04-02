@@ -46,4 +46,7 @@ struct server_config_t server_config;
 int
 read_config(const char * filename);
 
+void
+log_write(time_t write_time, const char *, ...);
+
 #endif /* SERVER_COMMON_H_ */

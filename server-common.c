@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
+#include <time.h>
 #include "common.h"
 #include "server-common.h"
 #include "config-file.h"
@@ -99,4 +101,38 @@ read_config(const char * filename)
   server_config.name = (char *) server_name;
 
   return TRUE;
+}
+
+void
+log_write(time_t write_time, const char * format, ...)
+{
+  if (server_config.logging == FALSE)
+    {
+      return;
+    }
+
+  FILE * logfile = fopen(server_config.logfile, "a");
+
+  if (!logfile)
+    {
+      fprintf(stderr, "Could not open %s for writing.\n",
+          server_config.logfile);
+      return;
+    }
+
+  va_list argptr;
+
+  struct tm *tm_now = localtime(&write_time);
+
+  fprintf(logfile, "%d/%02d/%04d %02d:%02d:%02d ", tm_now->tm_mday,
+      tm_now->tm_mon, tm_now->tm_year + 1900, tm_now->tm_hour, tm_now->tm_min,
+      tm_now->tm_sec);
+
+  va_start(argptr, format);
+  vfprintf(logfile, format, argptr);
+  va_end(argptr);
+
+  fprintf(logfile, "\n");
+
+  fclose(logfile);
 }
