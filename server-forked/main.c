@@ -28,72 +28,8 @@ stop_accepting()
   server_state.accepting = FALSE;
 }
 
-struct childpid_list_t
-{
-  pid_t pid;
-  struct childpid_list_t * next;
-};
-
-struct childpid_list_t * childpid_list = NULL;
-
 void
-add_childpid(pid_t childpid)
-{
-  /* add the new child to the child manager */
-  struct childpid_list_t * new_childpid = calloc(1,
-      sizeof(struct childpid_list_t));
-  new_childpid->pid = childpid;
-  new_childpid->next = NULL;
-
-  if (childpid_list)
-    {
-      struct childpid_list_t * tail_childpid = childpid_list;
-      while (tail_childpid->next)
-        {
-          tail_childpid = tail_childpid->next;
-        }
-      tail_childpid->next = new_childpid;
-    }
-  else
-    {
-      childpid_list = new_childpid;
-    }
-}
-
-void
-remove_childpid(pid_t childpid)
-{
-  /* find the child to remove */
-  struct childpid_list_t * childpid_to_remove = NULL, *prev_childpid = NULL;
-
-  childpid_to_remove = childpid_list;
-  while (childpid_to_remove && childpid_to_remove->pid != childpid)
-    {
-      prev_childpid = childpid_to_remove;
-      childpid_to_remove = childpid_to_remove->next;
-    }
-
-  /* remove the child from the child manager */
-  if (childpid_to_remove)
-    {
-      struct childpid_list_t * next_childpid = childpid_to_remove->next;
-
-      if (prev_childpid)
-        {
-          prev_childpid->next = next_childpid;
-        }
-
-      if (childpid_list == childpid_to_remove)
-        {
-          childpid_list = childpid_to_remove->next;
-        }
-
-      free(childpid_to_remove);
-    }
-}
-
-void
-child_exits()
+remove_pid()
 {
   pid_t childpid = wait(NULL);
 
@@ -116,6 +52,9 @@ main(int argc, char ** argv)
       return EXIT_FAILURE;
     }
 
+  log_write(time(NULL), "%s", server_name);
+  log_write(time(NULL), "initialisation complete");
+
   /* create socket */
   server_state.listen_socket = i_socket(PF_INET, SOCK_STREAM, 0);
   // set the socket to be reusable
@@ -131,6 +70,7 @@ main(int argc, char ** argv)
   i_bind(server_state.listen_socket, (struct sockaddr *) &myaddr,
       sizeof(myaddr));
   i_listen(server_state.listen_socket, 5);
+  log_write(time(NULL), "listening on port %d", server_config.port);
 
   /* register interrupt handler */
   struct sigaction quit_action;
@@ -141,7 +81,7 @@ main(int argc, char ** argv)
 
   /* register child quit handler */
   struct sigaction child_finished;
-  child_finished.sa_handler = (void *) child_exits;
+  child_finished.sa_handler = (void *) remove_pid;
   sigemptyset(&child_finished.sa_mask);
   child_finished.sa_flags = 0;
   sigaction(SIGCHLD, &child_finished, NULL);
