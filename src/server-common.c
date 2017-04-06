@@ -19,7 +19,44 @@ struct server_state_t server_state =
   { TRUE, 0, 0, 0, 0 };
 
 /* server settings */
-struct server_config_t server_config;
+struct server_config_t server_config =
+  {
+    // Default port
+    80,
+
+    // Default document root to serve
+    "./",
+
+    // Default host
+    "localhost",
+
+    // Signal ID to register shutdown action
+    9999,
+
+    // HTTP request to this method will trigger shutdown
+    "shutdown",
+
+    // HTTP request to this method will return server status message
+    "status",
+
+    // Default server logging file
+    "httpd.log",
+
+    // Enable logging
+    TRUE,
+
+    // Default server access logging file
+    "requests.log",
+
+    // Enable access logging
+    FALSE,
+
+    // Mime type lookup list
+    NULL,
+
+    // Server name
+    "Default server name"
+  };
 
 int
 read_config(const char * filename)

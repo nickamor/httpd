@@ -276,8 +276,8 @@ http_respond(int clisock)
   struct tm * tm_finish = localtime(&time_t_finish);
   log_write(time_t_receive, "%02d:%02d:%02d ip port %s %d %d 0", tm_finish->tm_hour, tm_finish->tm_min,
       tm_finish->tm_sec, req_filename, status_code, content_length);
-  if (special_request_type = 1) {
-      log_write(time(NULL), "shutdow‹n request");
+  if (special_request_type == 1) {
+      log_write(time(NULL), "shutdown request");
   }
 
   shutdown(clisock, SHUT_RDWR);

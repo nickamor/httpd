@@ -1,37 +1,38 @@
 # Nick Amor - 2011
 
-TARGETS = server-single server-forked server-threaded
+TARGETS = server-single server-forked server-threaded server-select
 
-BINARIES = server-single/server-single slow-gethttp/slow-gethttp \
-		server-forked/server-forked server-threaded/server-threaded \
-		server-select/server-select
+BINARIES = server-single server-forked server-threaded server-select
 
-SRC = common.c config-file.c http.c sockets.c server-common.c
+SRC = src/common.c src/config-file.c src/http.c src/sockets.c src/server-common.c
 OBJ = $(SRC:.c=.o)
-SRC_SINGLE = server-single/main.c
+SRC_SINGLE = src/server-single/main.c
 OBJ_SINGLE = $(SRC_SINGLE:.c=.o)
-SRC_FORKED = server-forked/main.c server-forked/childpid.c
+SRC_FORKED = src/server-forked/main.c src/server-forked/childpid.c
 OBJ_FORKED = $(SRC_FORKED:.c=.o)
-SRC_THREADED = server-threaded/main.c
+SRC_THREADED = src/server-threaded/main.c
 OBJ_THREADED = $(SRC_FORKED:.c=.o)
+SRC_SELECT = src/server-select/main.c
+OBJ_SELECT = $(SRC_SELECT:.c=.o)
 
 CC = gcc
 CFLAGS = -Wall -Wextra -g
 LDFLAGS = 
 
-include makefile.platform
-
 .PHONY: all clean $(TARGETS)
 all: $(TARGETS)
 
 server-single: $(OBJ) $(OBJ_SINGLE)
-	@$(CC) $(OBJ) $(OBJ_SINGLE) -o server-single/server-single $(LDFLAGS)
+	$(CC) $(OBJ) $(OBJ_SINGLE) -o server-single $(LDFLAGS)
 
 server-forked: $(OBJ) $(OBJ_FORKED)
-	@$(CC) $(OBJ) $(OBJ_FORKED) -o server-forked/server-forked $(LDFLAGS)
+	$(CC) $(OBJ) $(OBJ_FORKED) -o server-forked $(LDFLAGS)
 
 server-threaded: $(OBJ) $(OBJ_THREADED)
-	@$(CC) $(OBJ) $(OBJ_THREADED) -o server-threaded/server-threaded $(LDFLAGS)
+	$(CC) $(OBJ) $(OBJ_THREADED) -o server-threaded $(LDFLAGS)
+
+server-select: $(OBJ) $(OBJ_SELECT)
+	$(CC) $(OBJ) $(OBJ_SELECT) -o server-select $(LDFLAGS)
 
 %.o: %.c
 	@$(CC) $(CFLAGS) -c -o $@ $<

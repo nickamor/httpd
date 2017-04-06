@@ -50,7 +50,7 @@ main(int argc, char ** argv)
   setsockopt(server_state.listen_socket, SOL_SOCKET, SO_REUSEADDR, (char*) &on,
       sizeof(on));
 
-  /* bind socket to listening port and set to listen*/
+  /* bind socket to listening port and set to listen */
   struct sockaddr_in myaddr;
   myaddr.sin_family = PF_INET;
   myaddr.sin_port = htons(server_config.port);
@@ -68,6 +68,8 @@ main(int argc, char ** argv)
 
   /* remember parent pid */
   server_state.parent_pid = getpid();
+
+  log_write(time(NULL), "Listening for connections on port %d", myaddr.sin_port);
 
   while (server_state.accepting)
     {
