@@ -112,7 +112,7 @@ int read_config(const char *filename) {
     return TRUE;
 }
 
-void log_write(time_t write_time, const char *format, ...) {
+void log_append(const char *format, ...) {
     if (server_config.logging == FALSE) {
         return;
     }
@@ -127,10 +127,15 @@ void log_write(time_t write_time, const char *format, ...) {
 
     va_list argptr;
 
-    struct tm *tm_now = localtime(&write_time);
+    time_t time_now = time(NULL);
+    struct tm *tm_now = localtime(&time_now);
 
-    fprintf(logfile, "%d/%02d/%04d %02d:%02d:%02d ", tm_now->tm_mday,
-            tm_now->tm_mon, tm_now->tm_year + 1900, tm_now->tm_hour, tm_now->tm_min,
+    fprintf(logfile, "%04d/%02d/%02dT%02d:%02d:%02d ",
+            tm_now->tm_year + 1900,
+            tm_now->tm_mon,
+            tm_now->tm_mday,
+            tm_now->tm_hour,
+            tm_now->tm_min,
             tm_now->tm_sec);
 
     va_start(argptr, format);

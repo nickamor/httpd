@@ -11,6 +11,12 @@
 
 const char *server_name = "server-threaded";
 
+void thread_routine(void *socket_fd) {
+    log_append("Thread created");
+
+    http_respond(*(int *)socket_fd);
+}
+
 void server_setup() {
 
 }
@@ -22,7 +28,7 @@ void server_accept(int socket_fd) {
 
     pthread_t new_thread;
     pthread_attr_t new_thread_attr;
-    pthread_create(&new_thread, &new_thread_attr, (void *) &http_respond, (void *) &socket_fd);
+    pthread_create(&new_thread, &new_thread_attr, (void *)&thread_routine, (void *) &socket_fd);
     pthread_detach(new_thread);
 
     --server_state.connections;

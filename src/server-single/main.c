@@ -19,5 +19,5 @@ void server_accept(int socket_fd) {
 }
 
 void server_shutdown() {
-    
+
 }

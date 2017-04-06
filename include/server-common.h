@@ -45,7 +45,7 @@ struct server_config_t server_config;
 
 int read_config(const char *filename);
 
-void log_write(time_t write_time, const char *, ...);
+void log_append(const char *, ...);
 
 void server_setup();
 void server_accept(int socket_fd);

@@ -30,8 +30,8 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    log_write(time(NULL), "%s", server_name);
-    log_write(time(NULL), "initialisation complete");
+    log_append("%s", server_name);
+    log_append("initialisation complete");
 
     /* create socket */
     server_state.listen_socket = i_socket(PF_INET, SOCK_STREAM, 0);
@@ -61,8 +61,8 @@ int main(int argc, char **argv) {
     /* remember parent pid */
     server_state.parent_pid = getpid();
 
-    log_write(time(NULL), "Listening for connections on port %d",
-              myaddr.sin_port);
+    log_append("Listening for connections on port %d",
+               myaddr.sin_port);
 
     while (server_state.accepting) {
         /* accept new connections */
@@ -79,8 +79,8 @@ int main(int argc, char **argv) {
     close(server_state.listen_socket);
     server_shutdown();
 
-    log_write(time(NULL), "all connections closed");
-    log_write(time(NULL), "terminating server");
+    log_append("All connections closed.");
+    log_append("Terminating server.");
 
     return EXIT_SUCCESS;
 }

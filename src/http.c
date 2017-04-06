@@ -222,10 +222,10 @@ void http_respond(int clisock) {
     /* log completion time */
     time_t time_t_finish = time(NULL);
     struct tm *tm_finish = localtime(&time_t_finish);
-    log_write(time_t_receive, "%02d:%02d:%02d ip port %s %d %d 0", tm_finish->tm_hour, tm_finish->tm_min,
-              tm_finish->tm_sec, req_filename, status_code, content_length);
+    log_append("%02d:%02d:%02d ip port %s %d %d 0", tm_finish->tm_hour, tm_finish->tm_min,
+               tm_finish->tm_sec, req_filename, status_code, content_length);
     if (special_request_type == REQUEST_TYPE_SHUTDOWN) {
-        log_write(time(NULL), "shutdown request");
+        log_append("shutdown request");
     }
 
     shutdown(clisock, SHUT_RDWR);
