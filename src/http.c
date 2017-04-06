@@ -15,9 +15,9 @@
 
 #include "common.h"
 #include "server-common.h"
+#include "sockets.h"
 #include "http.h"
 
-#define REQUEST_SIZE 1024
 #define RESPONSE_SIZE 1024
 
 enum special_request_t {
@@ -30,25 +30,11 @@ void log_request(const char *request);
 
 void append_header_ok(char *response);
 
-void http_respond(int clisock) {
-    /* receive bytes */
-    ssize_t irecv = 0;
-    char request[REQUEST_SIZE];
-    memset(&request, 0, REQUEST_SIZE);
-    irecv = recv(clisock, &request, REQUEST_SIZE, 0);
-    ssize_t recvtotal = irecv;
-    while (irecv > 0 && request[recvtotal] != 0) {
-        /* break at end of request */
-        if (strstr(request, "/r/n/r/n")) {
-            break;
-        }
+char *receive_request(int socket_fd);
 
-        irecv = recv(clisock, &request + recvtotal, REQUEST_SIZE, 0);
-        recvtotal += irecv;
-    }
-    shutdown(clisock, SHUT_RD);
-
-    time_t time_t_receive = time(NULL);
+void http_respond(int socket_fd) {
+    char *request = receive_request(socket_fd);
+    shutdown(socket_fd, SHUT_RD);
 
     /* get date for response use */
     char *date = strdate();
@@ -213,9 +199,9 @@ void http_respond(int clisock) {
     }
     free(date);
 
-    send(clisock, response, sizeof(char) * strlen(response), 0);
+    send(socket_fd, response, sizeof(char) * strlen(response), 0);
     if (content_length > 0) {
-        send(clisock, content, content_length, 0);
+        send(socket_fd, content, content_length, 0);
         free(content);
     }
 
@@ -228,8 +214,28 @@ void http_respond(int clisock) {
         log_append("shutdown request");
     }
 
-    shutdown(clisock, SHUT_RDWR);
-    close(clisock);
+    free(request);
+
+    shutdown(socket_fd, SHUT_RDWR);
+    close(socket_fd);
+}
+
+char *receive_request(int socket_fd) {
+    size_t buffer_size = sizeof(char);
+    char *buffer = malloc(buffer_size);
+    ssize_t num_bytes = 0;
+
+    do {
+        ssize_t new_bytes = i_recvfrom(socket_fd, buffer + num_bytes, buffer_size - num_bytes, 0, NULL, NULL);
+        num_bytes += new_bytes;
+
+        buffer_size *= 2;
+        resize_buffer((void **)&buffer, &buffer_size, buffer_size * 2);
+    } while (strstr(buffer, "\r\n\r\n") == NULL);
+
+    resize_buffer((void **)&buffer, &buffer_size, (size_t) num_bytes);
+
+    return buffer;
 }
 
 /* log request */

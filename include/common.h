@@ -31,4 +31,6 @@ unsigned char *filegetc(const char *);
 
 char *get_content_type(const char *, struct list_t *list);
 
+void resize_buffer(void **buffer, size_t *size, size_t new_size);
+
 #endif

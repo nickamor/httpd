@@ -51,18 +51,26 @@ unsigned int strhash(char *string) {
 /* read a file to a stream of unsigned chars */
 unsigned char *filegetc(const char *filename) {
     unsigned char *content = NULL;
-    int content_length = file_length(filename);
+    size_t content_length = file_length(filename);
     if (content_length > 0) {
         content = calloc(content_length + 1, sizeof(char));
 
         FILE *content_file = fopen(filename, "r");
+        if (content_file == NULL) {
+            fprintf(stderr, "Error opening file %s\n", filename);
+            perror("fopen");
+            exit(EXIT_FAILURE);
+        }
+
         int bytes_read = 0, readin = 0;
         while (bytes_read < content_length) {
             readin = fgetc(content_file);
             if (readin < 0) {
-                fprintf(stderr, "UNEXPECTED END OF FILE\n");
+                fprintf(stderr, "Unexpected end of file reading %s\n", filename);
+                perror("fgetc");
+                exit(EXIT_FAILURE);
             } else {
-                content[bytes_read] = readin;
+                content[bytes_read] = (unsigned char)readin;
             }
             ++bytes_read;
         }
@@ -104,4 +112,15 @@ char *get_content_type(const char *filename, struct list_t *mime_types) {
     }
 
     return NULL;
+}
+
+void resize_buffer(void **buffer, size_t *size, size_t new_size) {
+    char *new_buffer = (char *) realloc(*buffer, new_size);
+    if (new_buffer == NULL) {
+        fprintf(stderr, "Failed reallocating buffer");
+        perror("realloc");
+        exit(EXIT_FAILURE);
+    }
+    *buffer = new_buffer;
+    *size = new_size;
 }

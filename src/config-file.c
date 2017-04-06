@@ -11,7 +11,6 @@
 
 #include "config-file.h"
 #include "common.h"
-#include "list.h"
 
 /* parse a file referred to by filename to a list of key-value pairs */
 struct list_t *parse_config(const char *filename) {
