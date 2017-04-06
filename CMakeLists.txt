@@ -9,6 +9,7 @@ set(SOURCE_FILES
         src/common.c
         src/config-file.c
         src/http.c
+        src/list.c
         src/server-common.c
         src/sockets.c
         src/main.c)

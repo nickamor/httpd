@@ -13,6 +13,7 @@
 #include "common.h"
 #include "server-common.h"
 #include "config-file.h"
+#include "list.h"
 
 /* server state */
 struct server_state_t server_state =
@@ -91,15 +92,7 @@ int read_config(const char *filename) {
         } else if (strcmp(keyval->key, "recording") == 0) {
             server_config.recording = ((strcmp(keyval->value, "yes") == 0) ? TRUE : FALSE);
         } else if (strstr(keyval->key, "type")) {
-            struct list_t *new = malloc(sizeof(struct list_t));
-            new->data = keyval;
-            new->next = NULL;
-
-            if (server_config.mime_types) {
-                list_tail(server_config.mime_types)->next = new;
-            } else {
-                server_config.mime_types = new;
-            }
+            list_append(&server_config.mime_types, keyval->value);
         }
 
         iter = iter->next;

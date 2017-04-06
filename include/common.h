@@ -6,16 +6,13 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
+#include "list.h"
+
 #ifndef COMMON_FILE_H_
 #define COMMON_FILE_H_
 
 #define TRUE 1
 #define FALSE 0
-
-struct list_t {
-    void *data;
-    struct list_t *next;
-};
 
 struct key_value_t {
     char *key;
@@ -25,8 +22,6 @@ struct key_value_t {
 int file_exists(const char *);
 
 size_t file_length(const char *);
-
-struct list_t *list_tail(struct list_t *);
 
 unsigned int strhash(char *);
 

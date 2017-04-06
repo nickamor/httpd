@@ -9,6 +9,7 @@
 #include <time.h>
 
 #include "common.h"
+#include "list.h"
 
 /* returns 1 if a file named filename exists, 0 otherwise */
 int file_exists(const char *filename) {
@@ -31,14 +32,6 @@ size_t file_length(const char *filename) {
     } else {
         return -1;
     }
-}
-
-/* return the last item in a linked list */
-struct list_t *list_tail(struct list_t *list) {
-    if (list->next == NULL) {
-        return list;
-    }
-    return list_tail(list->next);
 }
 
 /* for now, simple string hashing function */

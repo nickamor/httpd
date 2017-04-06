@@ -11,6 +11,7 @@
 
 #include "config-file.h"
 #include "common.h"
+#include "list.h"
 
 /* parse a file referred to by filename to a list of key-value pairs */
 struct list_t *parse_config(const char *filename) {
@@ -40,17 +41,7 @@ struct list_t *parse_config(const char *filename) {
         parsed_line->value = calloc(valuelen + 1, sizeof(char));
         memcpy(parsed_line->value, buff_val, valuelen);
 
-        // add to list
-        struct list_t *new;
-        new = malloc(sizeof(struct list_t));
-        new->data = parsed_line;
-        new->next = NULL;
-        if (list) {
-            struct list_t *tail = list_tail(list);
-            tail->next = new;
-        } else {
-            list = new;
-        }
+        list_append(&list, parsed_line);
     }
 
     fclose(file);
