@@ -6,8 +6,7 @@
  */
 
 #include <stdlib.h>
-#include <stdio.h>
-#include "childpid.h"
+#include "server-forked/childpid.h"
 
 struct childpid_list_t *childpid_list = NULL;
 

@@ -28,7 +28,7 @@ struct list_t *parse_config(const char *filename) {
         // parse line keys and values
         char buff_key[80], buff_val[80];
         sscanf(readline, "%s %s\n", buff_key, buff_val);
-        int keylen = strlen(buff_key), valuelen = strlen(buff_val);
+        size_t keylen = strlen(buff_key), valuelen = strlen(buff_val);
 
         // create key value pairs
         struct key_value_t *parsed_line;

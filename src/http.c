@@ -28,6 +28,8 @@ enum special_request_t {
 
 void log_request(const char *request);
 
+void append_header_ok(char *response);
+
 void http_respond(int clisock) {
     /* receive bytes */
     ssize_t irecv = 0;
@@ -137,8 +139,7 @@ void http_respond(int clisock) {
                 content_length = strlen(docstatus_format) + 1024;
                 content = calloc(content_length + 1, sizeof(char));
 
-                sprintf(
-                        (char *) content,
+                sprintf((char *) content,
                         docstatus_format, server_config.name, date, server_state.connections,
                         server_state.total_requests, server_config.port, server_config.shutdown_signal,
                         server_state.parent_pid, server_config.shutdown_request);
@@ -151,12 +152,12 @@ void http_respond(int clisock) {
                         "Content-Type: text/html\r\n"
                         "Content-Length: %d\r\n"
                         "Connection: close\r\n"
-                        "\r\n", date, server_config.name, (int)content_length);
+                        "\r\n", date, server_config.name, (int) content_length);
 
             } else {
                 content_length = file_length(localfile);
-                sprintf(
-                        response,
+
+                sprintf(response,
                         "HTTP/1.1 200 OK\r\n"
                                 "Date: %s\r\n"
                                 "Server: %s\r\n"
@@ -164,13 +165,13 @@ void http_respond(int clisock) {
                                 "Content-Length: %d\r\n"
                                 "Connection: close\r\n"
                                 "\r\n", date, server_config.name, get_content_type(localfile, server_config.mime_types),
-                        (int)content_length);
+                        (int) content_length);
+
                 content = filegetc(localfile);
             }
             break;
         case 204:
-            sprintf(
-                    response,
+            sprintf(response,
                     "HTTP/1.1 204 No Data\r\n"
                             "Date: %s\r\n"
                             "Server: %s\r\n"
@@ -180,7 +181,8 @@ void http_respond(int clisock) {
                             "\r\n", date, server_config.name, get_content_type(localfile, server_config.mime_types));
             break;
         case 400:
-            sprintf(response, "HTTP/1.1 400 Bad Request\r\n"
+            sprintf(response,
+                    "HTTP/1.1 400 Bad Request\r\n"
                     "Date: %s\r\n"
                     "Server: %s\r\n"
                     "Connection: close\r\n"
@@ -190,13 +192,14 @@ void http_respond(int clisock) {
             content_length = strlen(doc404_format) + strlen(req_filename);
             content = calloc(content_length + 1, sizeof(char));
 
-            sprintf(response, "HTTP/1.1 404 Not Found\r\n"
+            sprintf(response,
+                    "HTTP/1.1 404 Not Found\r\n"
                     "Date: %s\r\n"
                     "Server: %s\r\n"
                     "Content-Type: text/html\r\n"
                     "Content-Length: %d\r\n"
                     "Connection: close\r\n"
-                    "\r\n", date, server_config.name, (int)content_length);
+                    "\r\n", date, server_config.name, (int) content_length);
 
             sprintf((char *) content, doc404_format, req_filename);
             break;
@@ -221,7 +224,7 @@ void http_respond(int clisock) {
     struct tm *tm_finish = localtime(&time_t_finish);
     log_write(time_t_receive, "%02d:%02d:%02d ip port %s %d %d 0", tm_finish->tm_hour, tm_finish->tm_min,
               tm_finish->tm_sec, req_filename, status_code, content_length);
-    if (special_request_type == 1) {
+    if (special_request_type == REQUEST_TYPE_SHUTDOWN) {
         log_write(time(NULL), "shutdown request");
     }
 

@@ -5,6 +5,8 @@
  *      Author: nick
  */
 
+#include <time.h>
+
 #ifndef SERVER_COMMON_H_
 #define SERVER_COMMON_H_
 
@@ -44,5 +46,9 @@ struct server_config_t server_config;
 int read_config(const char *filename);
 
 void log_write(time_t write_time, const char *, ...);
+
+void server_setup();
+void server_accept(int socket_fd);
+void server_shutdown();
 
 #endif /* SERVER_COMMON_H_ */
