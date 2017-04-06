@@ -58,3 +58,6 @@ dkms.conf
 
 # Program output
 *.log
+
+# CLion CMake build output
+cmake-build-debug/

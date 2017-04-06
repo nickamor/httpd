@@ -6,11 +6,11 @@
 #include <unistd.h>
 #include <time.h>
 
-#include "../common.h"
-#include "../server-common.h"
-#include "../sockets.h"
-#include "../http.h"
-#include "../config-file.h"
+#include "common.h"
+#include "server-common.h"
+#include "sockets.h"
+#include "http.h"
+#include "config-file.h"
 
 const char * server_name = "server-single";
 
