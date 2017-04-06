@@ -4,13 +4,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-int
-main(void);
+int main(int, char *[]) {
+    printf("Hello World!\n");
 
-int
-main()
-{
-  printf("Hello World!\n");
-
-  return 0;
+    return 0;
 }

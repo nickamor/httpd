@@ -28,6 +28,6 @@ i_sendto(int, const void *, size_t, int, const struct sockaddr *, socklen_t);
 
 int
 i_getaddrinfo(const char *, const char *, const struct addrinfo *,
-    struct addrinfo **);
+              struct addrinfo **);
 
 #endif /* SOCKETS_H_ */

@@ -16,160 +16,128 @@
 
 /* server state */
 struct server_state_t server_state =
-  { TRUE, 0, 0, 0, 0 };
+        {TRUE, 0, 0, 0, 0};
 
 /* server settings */
 struct server_config_t server_config =
-  {
-    // Default port
-    80,
+        {
+                // Default port
+                80,
 
-    // Default document root to serve
-    "./",
+                // Default document root to serve
+                "./",
 
-    // Default host
-    "localhost",
+                // Default host
+                "localhost",
 
-    // Signal ID to register shutdown action
-    9999,
+                // Signal ID to register shutdown action
+                9999,
 
-    // HTTP request to this method will trigger shutdown
-    "shutdown",
+                // HTTP request to this method will trigger shutdown
+                "shutdown",
 
-    // HTTP request to this method will return server status message
-    "status",
+                // HTTP request to this method will return server status message
+                "status",
 
-    // Default server logging file
-    "httpd.log",
+                // Default server logging file
+                "httpd.log",
 
-    // Enable logging
-    TRUE,
+                // Enable logging
+                TRUE,
 
-    // Default server access logging file
-    "requests.log",
+                // Default server access logging file
+                "requests.log",
 
-    // Enable access logging
-    FALSE,
+                // Enable access logging
+                FALSE,
 
-    // Mime type lookup list
-    NULL,
+                // Mime type lookup list
+                NULL,
 
-    // Server name
-    "Default server name"
-  };
+                // Server name
+                "Default server name"
+        };
 
-int
-read_config(const char * filename)
-{
-  if (!file_exists(filename))
-    {
-      fprintf(stderr, "Could not open %s for reading.\n", filename);
-      return FALSE;
+int read_config(const char *filename) {
+    if (!file_exists(filename)) {
+        fprintf(stderr, "Could not open %s for reading.\n", filename);
+        return FALSE;
     }
 
-  struct list_t * config_keys = parse_config(filename);
+    struct list_t *config_keys = parse_config(filename);
 
-  struct list_t * iter = config_keys;
-  while (iter)
-    {
-      struct key_value_t *keyval = iter->data;
+    struct list_t *iter = config_keys;
+    while (iter) {
+        struct key_value_t *keyval = iter->data;
 
-      if (strcmp(keyval->key, "port") == 0)
-        {
-          server_config.port = strtol(keyval->value, NULL, 0);
-        }
-      else if (strcmp(keyval->key, "root") == 0)
-        {
-          server_config.root = keyval->value;
-        }
-      else if (strcmp(keyval->key, "host") == 0)
-        {
-          server_config.host = keyval->value;
-        }
-      else if (strcmp(keyval->key, "shutdown-signal") == 0)
-        {
-          server_config.shutdown_signal = strtol(keyval->value, NULL, 0);
-        }
-      else if (strcmp(keyval->key, "shutdown-request") == 0)
-        {
-          server_config.shutdown_request = keyval->value;
-        }
-      else if (strcmp(keyval->key, "status-request") == 0)
-        {
-          server_config.status_request = keyval->value;
-        }
-      else if (strcmp(keyval->key, "logfile") == 0)
-        {
-          server_config.logfile = keyval->value;
-        }
-      else if (strcmp(keyval->key, "logging") == 0)
-        {
-          server_config.logging = (
-              (strcmp(keyval->value, "yes") == 0) ? TRUE : FALSE);
-        }
-      else if (strcmp(keyval->key, "recordfile") == 0)
-        {
-          server_config.recordfile = keyval->value;
-        }
-      else if (strcmp(keyval->key, "recording") == 0)
-        {
-          server_config.recording = (
-              (strcmp(keyval->value, "yes") == 0) ? TRUE : FALSE);
-        }
-      else if (strstr(keyval->key, "type"))
-        {
-          struct list_t * new = malloc(sizeof(struct list_t));
-          new->data = keyval;
-          new->next = NULL;
+        if (strcmp(keyval->key, "port") == 0) {
+            server_config.port = strtol(keyval->value, NULL, 0);
+        } else if (strcmp(keyval->key, "root") == 0) {
+            server_config.root = keyval->value;
+        } else if (strcmp(keyval->key, "host") == 0) {
+            server_config.host = keyval->value;
+        } else if (strcmp(keyval->key, "shutdown-signal") == 0) {
+            server_config.shutdown_signal = strtol(keyval->value, NULL, 0);
+        } else if (strcmp(keyval->key, "shutdown-request") == 0) {
+            server_config.shutdown_request = keyval->value;
+        } else if (strcmp(keyval->key, "status-request") == 0) {
+            server_config.status_request = keyval->value;
+        } else if (strcmp(keyval->key, "logfile") == 0) {
+            server_config.logfile = keyval->value;
+        } else if (strcmp(keyval->key, "logging") == 0) {
+            server_config.logging = (
+                    (strcmp(keyval->value, "yes") == 0) ? TRUE : FALSE);
+        } else if (strcmp(keyval->key, "recordfile") == 0) {
+            server_config.recordfile = keyval->value;
+        } else if (strcmp(keyval->key, "recording") == 0) {
+            server_config.recording = (
+                    (strcmp(keyval->value, "yes") == 0) ? TRUE : FALSE);
+        } else if (strstr(keyval->key, "type")) {
+            struct list_t *new = malloc(sizeof(struct list_t));
+            new->data = keyval;
+            new->next = NULL;
 
-          if (server_config.mime_types)
-            {
-              list_tail(server_config.mime_types)->next = new;
-            }
-          else
-            {
-              server_config.mime_types = new;
+            if (server_config.mime_types) {
+                list_tail(server_config.mime_types)->next = new;
+            } else {
+                server_config.mime_types = new;
             }
         }
 
-      iter = iter->next;
+        iter = iter->next;
     }
 
-  server_config.name = (char *) server_name;
+    server_config.name = (char *) server_name;
 
-  return TRUE;
+    return TRUE;
 }
 
-void
-log_write(time_t write_time, const char * format, ...)
-{
-  if (server_config.logging == FALSE)
-    {
-      return;
+void log_write(time_t write_time, const char *format, ...) {
+    if (server_config.logging == FALSE) {
+        return;
     }
 
-  FILE * logfile = fopen(server_config.logfile, "a");
+    FILE *logfile = fopen(server_config.logfile, "a");
 
-  if (!logfile)
-    {
-      fprintf(stderr, "Could not open %s for writing.\n",
-          server_config.logfile);
-      return;
+    if (!logfile) {
+        fprintf(stderr, "Could not open %s for writing.\n",
+                server_config.logfile);
+        return;
     }
 
-  va_list argptr;
+    va_list argptr;
 
-  struct tm *tm_now = localtime(&write_time);
+    struct tm *tm_now = localtime(&write_time);
 
-  fprintf(logfile, "%d/%02d/%04d %02d:%02d:%02d ", tm_now->tm_mday,
-      tm_now->tm_mon, tm_now->tm_year + 1900, tm_now->tm_hour, tm_now->tm_min,
-      tm_now->tm_sec);
+    fprintf(logfile, "%d/%02d/%04d %02d:%02d:%02d ", tm_now->tm_mday,
+            tm_now->tm_mon, tm_now->tm_year + 1900, tm_now->tm_hour, tm_now->tm_min,
+            tm_now->tm_sec);
 
-  va_start(argptr, format);
-  vfprintf(logfile, format, argptr);
-  va_end(argptr);
+    va_start(argptr, format);
+    vfprintf(logfile, format, argptr);
+    va_end(argptr);
 
-  fprintf(logfile, "\n");
+    fprintf(logfile, "\n");
 
-  fclose(logfile);
+    fclose(logfile);
 }

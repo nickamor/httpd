@@ -8,16 +8,14 @@
 #define TRUE 1
 #define FALSE 0
 
-struct list_t
-{
-  void *data;
-  struct list_t *next;
+struct list_t {
+    void *data;
+    struct list_t *next;
 };
 
-struct key_value_t
-{
-  char *key;
-  char *value;
+struct key_value_t {
+    char *key;
+    char *value;
 };
 
 int
@@ -27,7 +25,7 @@ int
 file_length(const char *);
 
 struct list_t *
-list_tail(struct list_t*);
+list_tail(struct list_t *);
 
 unsigned int
 strhash(char *);
@@ -39,7 +37,7 @@ unsigned char *
 filegetc(const char *);
 
 char *
-get_content_type(const char *, struct list_t * list);
+get_content_type(const char *, struct list_t *list);
 
 void
 dbgprint(char *);

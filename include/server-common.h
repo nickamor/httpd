@@ -8,35 +8,33 @@
 #ifndef SERVER_COMMON_H_
 #define SERVER_COMMON_H_
 
-const char * server_name;
+const char *server_name;
 
-struct server_state_t
-{
-  int accepting;
-  int connections;
-  int listen_socket;
-  int total_requests;
-  int parent_pid;
+struct server_state_t {
+    int accepting;
+    int connections;
+    int listen_socket;
+    int total_requests;
+    int parent_pid;
 };
 
-struct server_config_t
-{
-  int port;
-  char * root;
-  char * host;
+struct server_config_t {
+    int port;
+    char *root;
+    char *host;
 
-  int shutdown_signal;
-  char * shutdown_request;
-  char * status_request;
+    int shutdown_signal;
+    char *shutdown_request;
+    char *status_request;
 
-  char * logfile;
-  int logging;
-  char * recordfile;
-  int recording;
+    char *logfile;
+    int logging;
+    char *recordfile;
+    int recording;
 
-  struct list_t * mime_types;
+    struct list_t *mime_types;
 
-  char * name;
+    char *name;
 };
 
 struct server_state_t server_state;
@@ -44,7 +42,7 @@ struct server_state_t server_state;
 struct server_config_t server_config;
 
 int
-read_config(const char * filename);
+read_config(const char *filename);
 
 void
 log_write(time_t write_time, const char *, ...);
