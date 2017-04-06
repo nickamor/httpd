@@ -71,13 +71,13 @@ int read_config(const char *filename) {
         struct key_value_t *keyval = iter->data;
 
         if (strcmp(keyval->key, "port") == 0) {
-            server_config.port = strtol(keyval->value, NULL, 0);
+            server_config.port = (int)strtol(keyval->value, NULL, 0);
         } else if (strcmp(keyval->key, "root") == 0) {
             server_config.root = keyval->value;
         } else if (strcmp(keyval->key, "host") == 0) {
             server_config.host = keyval->value;
         } else if (strcmp(keyval->key, "shutdown-signal") == 0) {
-            server_config.shutdown_signal = strtol(keyval->value, NULL, 0);
+            server_config.shutdown_signal = (int)strtol(keyval->value, NULL, 0);
         } else if (strcmp(keyval->key, "shutdown-request") == 0) {
             server_config.shutdown_request = keyval->value;
         } else if (strcmp(keyval->key, "status-request") == 0) {
@@ -85,13 +85,11 @@ int read_config(const char *filename) {
         } else if (strcmp(keyval->key, "logfile") == 0) {
             server_config.logfile = keyval->value;
         } else if (strcmp(keyval->key, "logging") == 0) {
-            server_config.logging = (
-                    (strcmp(keyval->value, "yes") == 0) ? TRUE : FALSE);
+            server_config.logging = ((strcmp(keyval->value, "yes") == 0) ? TRUE : FALSE);
         } else if (strcmp(keyval->key, "recordfile") == 0) {
             server_config.recordfile = keyval->value;
         } else if (strcmp(keyval->key, "recording") == 0) {
-            server_config.recording = (
-                    (strcmp(keyval->value, "yes") == 0) ? TRUE : FALSE);
+            server_config.recording = ((strcmp(keyval->value, "yes") == 0) ? TRUE : FALSE);
         } else if (strstr(keyval->key, "type")) {
             struct list_t *new = malloc(sizeof(struct list_t));
             new->data = keyval;
