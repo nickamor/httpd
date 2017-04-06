@@ -8,6 +8,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+char *const server_name = "server-select";
+
 void server_setup() {
 
 }

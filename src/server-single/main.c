@@ -5,7 +5,7 @@
 #include "server-common.h"
 #include "http.h"
 
-const char *server_name = "server-single";
+char *const server_name = "server-single";
 
 void server_setup() {
 

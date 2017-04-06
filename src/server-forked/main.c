@@ -10,7 +10,7 @@
 #include "server-common.h"
 #include "http.h"
 
-const char *server_name = "server-forked";
+char *const server_name = "server-forked";
 
 void remove_pid() {
     pid_t childpid = wait(NULL);

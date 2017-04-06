@@ -10,7 +10,7 @@
 #ifndef SERVER_COMMON_H_
 #define SERVER_COMMON_H_
 
-const char *server_name;
+extern char *const server_name;
 
 struct server_state_t {
     int accepting;

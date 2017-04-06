@@ -9,7 +9,7 @@
 #include "server-common.h"
 #include "http.h"
 
-const char *server_name = "server-threaded";
+char *const server_name = "server-threaded";
 
 void thread_routine(void *socket_fd) {
     log_append("Thread created");
