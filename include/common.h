@@ -31,6 +31,4 @@ unsigned char *filegetc(const char *);
 
 char *get_content_type(const char *, struct list_t *list);
 
-void dbgprint(char *);
-
 #endif

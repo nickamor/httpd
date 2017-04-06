@@ -82,10 +82,6 @@ char *strdate(void) {
     return date;
 }
 
-void dbgprint(char *string) {
-    fprintf(stderr, "%s\n", string);
-}
-
 char *get_content_type(const char *filename, struct list_t *mime_types) {
     struct list_t *iter = mime_types;
 
