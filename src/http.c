@@ -20,38 +20,27 @@
 #define REQUEST_SIZE 1024
 #define RESPONSE_SIZE 1024
 
-const char *doc404_format = "<html><head><title>File Not Found</title></head>"
-        "<body><h3>File Not Found</h3><p>The requested document %s was not found"
-        " on this server.";
+enum special_request_t {
+    REQUEST_TYPE_NORMAL,
+    REQUEST_TYPE_SHUTDOWN,
+    REQUEST_TYPE_STATUS
+};
 
-const char *docshutdown =
-        "<html><head><title>Server Shutting Down...</title></head>"
-                "<body><h3>Server Shutting Down...";
-
-const char *docstatus_format =
-        "<html><head><title>Server Status</title></head><body>"
-                "<h3>Server Status</h3>"
-                "<p id=\"server-name\">%s</p>"
-                "<p id=\"date\">Status at %s</p>"
-                "<br>"
-                "<p id=\"connections\">Active connections: %d</p>"
-                "<p id=\"requests\">Total requests: %d</p>"
-                "<p id=\"listen-port\">Listening port: %d</p>"
-                "<br>"
-                "<p id=\"shutdown\">To shutdown, do \"kill -%d %d\" or click "
-                "<a href=\"/%s\">here</a>.";
+void log_request(const char *request);
 
 void http_respond(int clisock) {
     /* receive bytes */
-    int irecv = 0;
+    ssize_t irecv = 0;
     char request[REQUEST_SIZE];
     memset(&request, 0, REQUEST_SIZE);
     irecv = recv(clisock, &request, REQUEST_SIZE, 0);
-    int recvtotal = irecv;
+    ssize_t recvtotal = irecv;
     while (irecv > 0 && request[recvtotal] != 0) {
+        /* break at end of request */
         if (strstr(request, "/r/n/r/n")) {
             break;
         }
+
         irecv = recv(clisock, &request + recvtotal, REQUEST_SIZE, 0);
         recvtotal += irecv;
     }
@@ -62,27 +51,18 @@ void http_respond(int clisock) {
     /* get date for response use */
     char *date = strdate();
 
-    /* log request */
-    if (server_config.recording == TRUE) {
-        FILE *request_log_file = fopen(server_config.recordfile, "w");
-        int i = 0;
-        while (i < (int) strlen(request)) {
-            fputc(request[i], request_log_file);
-            ++i;
-        }
-        fclose(request_log_file);
-    }
+    log_request(request);
 
     /* start building response */
     int status_code = 0;
 
-    /* parse request, determing response code */
+    /* parse request, determining response code */
     char *req_filename = NULL;
     char *localfile = NULL;
     if (strstr(request, "GET ") == request) {
         /* get request filename */
         char *req_file_start = strchr(request, ' ') + 1;
-        int filename_length = strcspn(req_file_start, " ");
+        size_t filename_length = strcspn(req_file_start, " ");
         if (filename_length > 0) {
             req_filename = calloc(filename_length + 1, sizeof(char));
             strncpy(req_filename, req_file_start, filename_length);
@@ -102,11 +82,11 @@ void http_respond(int clisock) {
                     num[1] = *(c + 2);
                     num[2] = '\0';
 
-                    int hexchar = (int) strtol(num, NULL, 16);
+                    long hexchar = strtol(num, NULL, 16);
 
                     char *therestofthestring = c + 3;
 
-                    *c = hexchar;
+                    *c = (char) hexchar;
                     *(c + 1) = '\0';
 
                     strcat(c, therestofthestring);
@@ -119,6 +99,7 @@ void http_respond(int clisock) {
                 strcat(localfile, "index.html");
             }
         }
+
         /* test file exists */
         if (file_exists(localfile)) {
             if (file_length(localfile) > 0) {
@@ -134,32 +115,25 @@ void http_respond(int clisock) {
     }
 
     /* handle special requests */
-    int special_request_type = 0;
+    enum special_request_t special_request_type = REQUEST_TYPE_NORMAL;
     if (strcmp(req_filename + 1, server_config.shutdown_request) == 0) {
         kill(server_state.parent_pid, server_config.shutdown_signal);
         status_code = HTTP_200_OK;
-        special_request_type = 1;
+        special_request_type = REQUEST_TYPE_SHUTDOWN;
     } else if (strcmp(req_filename + 1, server_config.status_request) == 0) {
         status_code = HTTP_200_OK;
-        special_request_type = 2;
+        special_request_type = REQUEST_TYPE_STATUS;
     }
 
     /* build response */
     char response[RESPONSE_SIZE];
     unsigned char *content = NULL;
-    int content_length = 0;
+    size_t content_length = 0;
     switch (status_code) {
         case 200:
-            if (special_request_type == 1) {
-                sprintf(response, "HTTP/1.1 200 OK\r\n"
-                        "Date: %s\r\n"
-                        "Server: %s\r\n"
-                        "Content-Type: text/html\r\n"
-                        "Content-Length: %d\r\n"
-                        "Connection: close\r\n"
-                        "\r\n"
-                        "%s", date, server_config.name, (int) strlen(docshutdown), docshutdown);
-            } else if (special_request_type == 2) {
+            if (special_request_type == REQUEST_TYPE_SHUTDOWN) {
+                sprintf(response, header_shutdown, date, server_config.name, (int) strlen(docshutdown), docshutdown);
+            } else if (special_request_type == REQUEST_TYPE_STATUS) {
                 content_length = strlen(docstatus_format) + 1024;
                 content = calloc(content_length + 1, sizeof(char));
 
@@ -177,7 +151,7 @@ void http_respond(int clisock) {
                         "Content-Type: text/html\r\n"
                         "Content-Length: %d\r\n"
                         "Connection: close\r\n"
-                        "\r\n", date, server_config.name, content_length);
+                        "\r\n", date, server_config.name, (int)content_length);
 
             } else {
                 content_length = file_length(localfile);
@@ -190,7 +164,7 @@ void http_respond(int clisock) {
                                 "Content-Length: %d\r\n"
                                 "Connection: close\r\n"
                                 "\r\n", date, server_config.name, get_content_type(localfile, server_config.mime_types),
-                        content_length);
+                        (int)content_length);
                 content = filegetc(localfile);
             }
             break;
@@ -222,7 +196,7 @@ void http_respond(int clisock) {
                     "Content-Type: text/html\r\n"
                     "Content-Length: %d\r\n"
                     "Connection: close\r\n"
-                    "\r\n", date, server_config.name, content_length);
+                    "\r\n", date, server_config.name, (int)content_length);
 
             sprintf((char *) content, doc404_format, req_filename);
             break;
@@ -253,4 +227,17 @@ void http_respond(int clisock) {
 
     shutdown(clisock, SHUT_RDWR);
     close(clisock);
+}
+
+/* log request */
+void log_request(const char *request) {
+    if (server_config.recording == TRUE) {
+        FILE *request_log_file = fopen(server_config.recordfile, "w");
+        int i = 0;
+        while (i < (int) strlen(request)) {
+            fputc(request[i], request_log_file);
+            ++i;
+        }
+        fclose(request_log_file);
+    }
 }

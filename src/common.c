@@ -19,7 +19,7 @@ int file_exists(const char *filename) {
 }
 
 /* returns file length in bytes, or -1 if no such file exists */
-int file_length(const char *filename) {
+size_t file_length(const char *filename) {
     if (file_exists(filename)) {
         /* get content length */
         struct stat stbuf;

@@ -20,7 +20,7 @@ struct key_value_t {
 
 int file_exists(const char *);
 
-int file_length(const char *);
+size_t file_length(const char *);
 
 struct list_t *list_tail(struct list_t *);
 
