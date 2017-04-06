@@ -18,28 +18,20 @@ struct key_value_t {
     char *value;
 };
 
-int
-file_exists(const char *);
+int file_exists(const char *);
 
-int
-file_length(const char *);
+int file_length(const char *);
 
-struct list_t *
-list_tail(struct list_t *);
+struct list_t *list_tail(struct list_t *);
 
-unsigned int
-strhash(char *);
+unsigned int strhash(char *);
 
-char *
-strdate(void);
+char *strdate(void);
 
-unsigned char *
-filegetc(const char *);
+unsigned char *filegetc(const char *);
 
-char *
-get_content_type(const char *, struct list_t *list);
+char *get_content_type(const char *, struct list_t *list);
 
-void
-dbgprint(char *);
+void dbgprint(char *);
 
 #endif

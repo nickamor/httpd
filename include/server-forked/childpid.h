@@ -18,11 +18,9 @@ struct childpid_list_t {
 struct childpid_list_t *childpid_list;
 
 
-void
-add_childpid(pid_t childpid);
+void add_childpid(pid_t childpid);
 
-void
-remove_childpid(pid_t childpid);
+void remove_childpid(pid_t childpid);
 
 
 #endif /* CHILDPID_H_ */

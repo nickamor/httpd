@@ -16,7 +16,6 @@ enum HTTP_RESPONSE_CODE {
     HTTP_400_Bad_Request = 400
 };
 
-void
-http_respond(int clisock);
+void http_respond(int clisock);
 
 #endif /* HTTP_H_ */
